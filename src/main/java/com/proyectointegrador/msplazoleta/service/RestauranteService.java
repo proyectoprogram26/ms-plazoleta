@@ -1,13 +1,17 @@
 package com.proyectointegrador.msplazoleta.service;
 
+import com.proyectointegrador.msplazoleta.exception.PropietarioInvalidoException;
 import com.proyectointegrador.msplazoleta.model.Restaurante;
 import com.proyectointegrador.msplazoleta.model.Usuario;
 import com.proyectointegrador.msplazoleta.repository.RestauranteRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -26,12 +30,23 @@ public class RestauranteService {
             ResponseEntity<Usuario> respuesta = restTemplate.getForEntity(url, Usuario.class);
             Usuario usuario = respuesta.getBody();
 
-            if (usuario == null || !"PROPIETARIO".equals(usuario.getRol())) {
-                throw new RuntimeException("El propietario no es válido o no tiene rol de PROPIETARIO");
+            if (usuario == null) {
+                throw new PropietarioInvalidoException("El propietario indicado no existe");
             }
 
+            if (!"PROPIETARIO".equals(usuario.getRol())) {
+                throw new PropietarioInvalidoException("El usuario no tiene rol de propietario");
+            }
+
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                throw new PropietarioInvalidoException("El propietario indicado no existe");
+            }
+            throw new PropietarioInvalidoException("No se pudo validar el propietario");
+        } catch (ResourceAccessException e) {
+            throw new PropietarioInvalidoException("No se pudo conectar al servicio de usuarios");
         } catch (Exception e) {
-            throw new RuntimeException("No se pudo validar el propietario: " + e.getMessage());
+            throw new PropietarioInvalidoException("No se pudo validar el propietario");
         }
 
         return repositorio.save(restaurante);
