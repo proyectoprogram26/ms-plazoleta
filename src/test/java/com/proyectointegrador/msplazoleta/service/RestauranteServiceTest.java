@@ -4,6 +4,7 @@ import com.proyectointegrador.msplazoleta.exception.PropietarioInvalidoException
 import com.proyectointegrador.msplazoleta.model.Restaurante;
 import com.proyectointegrador.msplazoleta.model.Usuario;
 import com.proyectointegrador.msplazoleta.repository.RestauranteRepository;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -71,5 +72,16 @@ class RestauranteServiceTest {
 
         PropietarioInvalidoException ex = assertThrows(PropietarioInvalidoException.class, () -> servicio.crearRestaurante(r));
         assertEquals("El usuario no tiene rol de propietario", ex.getMessage());
+    }
+
+    @Test
+    void cuandoNombreEsSoloNumeros_debeFallar() {
+        Restaurante r = new Restaurante();
+        r.setNombre("123456789");
+        r.setNit("123456789");
+        r.setTelefono("+573001234567");
+        r.setDireccion("Calle 123 #45-67");
+        r.setIdPropietario(1L);
+        assertThrows(ConstraintViolationException.class, () -> servicio.crearRestaurante(r));
     }
 }
