@@ -5,7 +5,6 @@ import com.proyectointegrador.msplazoleta.model.Restaurante;
 import com.proyectointegrador.msplazoleta.model.Usuario;
 import com.proyectointegrador.msplazoleta.repository.RestauranteRepository;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -15,12 +14,16 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
-@RequiredArgsConstructor
 @Validated
 public class RestauranteService {
 
     private final RestauranteRepository repositorio;
     private final RestTemplate restTemplate;
+
+    public RestauranteService(RestauranteRepository repositorio, RestTemplate restTemplate) {
+        this.repositorio = repositorio;
+        this.restTemplate = restTemplate;
+    }
 
     public Restaurante crearRestaurante(@Valid Restaurante restaurante) {
 
