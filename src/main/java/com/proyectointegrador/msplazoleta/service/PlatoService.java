@@ -1,5 +1,6 @@
 package com.proyectointegrador.msplazoleta.service;
 
+import com.proyectointegrador.msplazoleta.dto.ModificarPlatoRequest;
 import com.proyectointegrador.msplazoleta.exception.AccesoDenegadoPlatoException;
 import com.proyectointegrador.msplazoleta.exception.RestauranteNoEncontradoException;
 import com.proyectointegrador.msplazoleta.model.Plato;
@@ -37,6 +38,20 @@ public class PlatoService {
         validarPropietario(restaurante.getIdPropietario(), token);
 
         plato.setActivo(true);
+        platoRepository.save(plato);
+    }
+
+    public void modificarPlato(Long idPlato, ModificarPlatoRequest request, String token) {
+        Plato plato = platoRepository.findById(idPlato)
+                .orElseThrow(() -> new RestauranteNoEncontradoException("El plato indicado no existe"));
+
+        Restaurante restaurante = restauranteRepository.findById(plato.getIdRestaurante())
+                .orElseThrow(() -> new RestauranteNoEncontradoException("El restaurante indicado no existe"));
+
+        validarPropietario(restaurante.getIdPropietario(), token);
+
+        plato.setPrecio(request.getPrecio());
+        plato.setDescripcion(request.getDescripcion());
         platoRepository.save(plato);
     }
 
