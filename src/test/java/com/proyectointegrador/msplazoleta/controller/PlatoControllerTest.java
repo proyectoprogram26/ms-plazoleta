@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,9 +33,10 @@ class PlatoControllerTest {
     @Test
     void crearPlato_deberiaRetornarCreatedCuandoLosDatosSonValidos() throws Exception {
         Plato plato = crearPlatoValido();
-        doNothing().when(platoService).guardarPlato(any(Plato.class));
+        doNothing().when(platoService).guardarPlato(any(Plato.class), anyString());
 
         mockMvc.perform(post("/api/platos")
+                        .header("Authorization", "Bearer token-de-prueba")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(plato)))
                 .andExpect(status().isCreated());
@@ -46,6 +48,7 @@ class PlatoControllerTest {
         plato.setPrecio(0);
 
         mockMvc.perform(post("/api/platos")
+                        .header("Authorization", "Bearer token-de-prueba")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(plato)))
                 .andExpect(status().isBadRequest());
