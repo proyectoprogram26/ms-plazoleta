@@ -1,5 +1,6 @@
 package com.proyectointegrador.msplazoleta.controller;
 
+import com.proyectointegrador.msplazoleta.dto.ModificarPlatoRequest;
 import com.proyectointegrador.msplazoleta.model.Plato;
 import com.proyectointegrador.msplazoleta.service.PlatoService;
 import jakarta.validation.Valid;
@@ -23,5 +24,14 @@ public class PlatoController {
         String token = authHeader.replace("Bearer ", "");
         platoService.guardarPlato(plato, token);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Void> modificarPlato(@PathVariable Long id,
+                                               @Valid @RequestBody ModificarPlatoRequest request,
+                                               @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        platoService.modificarPlato(id, request, token);
+        return ResponseEntity.ok().build();
     }
 }
