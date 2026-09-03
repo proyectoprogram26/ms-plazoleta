@@ -23,4 +23,14 @@ public class ControllerAdvisor {
         });
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
+
+    @ExceptionHandler(RestauranteNoEncontradoException.class)
+    public ResponseEntity<Map<String, String>> handleRestauranteNoEncontrado(RestauranteNoEncontradoException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AccesoDenegadoPlatoException.class)
+    public ResponseEntity<Map<String, String>> handleAccesoDenegado(AccesoDenegadoPlatoException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("mensaje", ex.getMessage()));
+    }
 }
