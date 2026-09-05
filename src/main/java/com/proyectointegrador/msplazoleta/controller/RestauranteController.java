@@ -17,8 +17,10 @@ public class RestauranteController {
     }
 
     @PostMapping
-    public ResponseEntity<Restaurante> crear(@Valid @RequestBody Restaurante restaurante) {
-        Restaurante creado = servicio.crearRestaurante(restaurante);
+    public ResponseEntity<Restaurante> crear(@Valid @RequestBody Restaurante restaurante,
+                                             @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        Restaurante creado = servicio.crearRestaurante(restaurante, token);
         return ResponseEntity.status(201).body(creado);
     }
 }

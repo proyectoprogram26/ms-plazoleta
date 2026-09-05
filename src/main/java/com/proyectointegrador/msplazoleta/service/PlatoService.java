@@ -9,6 +9,9 @@ import com.proyectointegrador.msplazoleta.model.Usuario;
 import com.proyectointegrador.msplazoleta.repository.PlatoRepository;
 import com.proyectointegrador.msplazoleta.repository.RestauranteRepository;
 import com.proyectointegrador.msplazoleta.security.JwtUtil;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -59,7 +62,13 @@ public class PlatoService {
         String correoToken = jwtUtil.extraerCorreo(token);
 
         String url = "http://localhost:8080/usuarios/" + idPropietarioRestaurante;
-        ResponseEntity<Usuario> respuesta = restTemplate.getForEntity(url, Usuario.class);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + token);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<Usuario> respuesta = restTemplate.exchange(
+                url, HttpMethod.GET, entity, Usuario.class);
         Usuario propietario = respuesta.getBody();
 
         if (propietario == null || !propietario.getCorreo().equals(correoToken)) {
