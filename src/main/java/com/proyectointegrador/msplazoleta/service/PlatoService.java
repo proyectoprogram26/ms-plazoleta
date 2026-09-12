@@ -1,78 +1,64 @@
 package com.proyectointegrador.msplazoleta.service;
 
-import com.proyectointegrador.msplazoleta.dto.ModificarPlatoRequest;
-import com.proyectointegrador.msplazoleta.exception.AccesoDenegadoPlatoException;
-import com.proyectointegrador.msplazoleta.exception.RestauranteNoEncontradoException;
 import com.proyectointegrador.msplazoleta.model.Plato;
-import com.proyectointegrador.msplazoleta.model.Restaurante;
-import com.proyectointegrador.msplazoleta.model.Usuario;
 import com.proyectointegrador.msplazoleta.repository.PlatoRepository;
-import com.proyectointegrador.msplazoleta.repository.RestauranteRepository;
-import com.proyectointegrador.msplazoleta.security.JwtUtil;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import java.util.List;
 
 @Service
 public class PlatoService {
 
     private final PlatoRepository platoRepository;
-    private final RestauranteRepository restauranteRepository;
-    private final RestTemplate restTemplate;
-    private final JwtUtil jwtUtil;
 
-    public PlatoService(PlatoRepository platoRepository,
-                        RestauranteRepository restauranteRepository,
-                        RestTemplate restTemplate,
-                        JwtUtil jwtUtil) {
+    public PlatoService(PlatoRepository platoRepository) {
         this.platoRepository = platoRepository;
-        this.restauranteRepository = restauranteRepository;
-        this.restTemplate = restTemplate;
-        this.jwtUtil = jwtUtil;
     }
 
-    public void guardarPlato(Plato plato, String token) {
-        Restaurante restaurante = restauranteRepository.findById(plato.getIdRestaurante())
-                .orElseThrow(() -> new RestauranteNoEncontradoException("El restaurante indicado no existe"));
-
-        validarPropietario(restaurante.getIdPropietario(), token);
-
-        plato.setActivo(true);
-        platoRepository.save(plato);
+    // HU-03: Crear Plato
+    public Plato crearPlato(Plato plato) {
+        if (plato.getNombre() == null || plato.getNombre().trim().isEmpty() || plato.getNombre().length() < 2)
+            throw new IllegalArgumentException("El nombre debe tener al menos 2 caracteres");
+        if (plato.getPrecio() <= 0)
+            throw new IllegalArgumentException("El precio debe ser mayor a cero");
+        if (plato.getDescripcion() == null || plato.getDescripcion().trim().isEmpty())
+            throw new IllegalArgumentException("La descripción es obligatoria");
+        
+        validarNombreNoSoloNumeros(plato.getNombre());
+        return platoRepository.save(plato);
     }
 
-    public void modificarPlato(Long idPlato, ModificarPlatoRequest request, String token) {
+    // HU-04: Modificar Plato
+    public Plato modificarPlato(Long idPlato, Double nuevoPrecio, String nuevaDescripcion, Long idPropietario) {
         Plato plato = platoRepository.findById(idPlato)
-                .orElseThrow(() -> new RestauranteNoEncontradoException("El plato indicado no existe"));
+            .orElseThrow(() -> new IllegalArgumentException("El plato no existe"));
 
-        Restaurante restaurante = restauranteRepository.findById(plato.getIdRestaurante())
-                .orElseThrow(() -> new RestauranteNoEncontradoException("El restaurante indicado no existe"));
+        // Validar que solo el propietario del restaurante pueda modificar
+        if (!plato.getIdRestaurante().equals(idPropietario)) {
+            throw new SecurityException("No puedes modificar platos de otro restaurante");
+        }
 
-        validarPropietario(restaurante.getIdPropietario(), token);
+        // Validaciones
+        if (nuevoPrecio != null && nuevoPrecio <= 0) {
+            throw new IllegalArgumentException("El precio debe ser mayor a 0");
+        }
+        if (nuevaDescripcion != null && nuevaDescripcion.trim().isEmpty()) {
+            throw new IllegalArgumentException("La descripción es obligatoria");
+        }
 
-        plato.setPrecio(request.getPrecio());
-        plato.setDescripcion(request.getDescripcion());
-        platoRepository.save(plato);
+        // Solo se permiten modificar: precio y descripción
+        if (nuevoPrecio != null) plato.setPrecio(nuevoPrecio);
+        if (nuevaDescripcion != null) plato.setDescripcion(nuevaDescripcion);
+
+        return platoRepository.save(plato);
     }
 
-    private void validarPropietario(Long idPropietarioRestaurante, String token) {
-        String correoToken = jwtUtil.extraerCorreo(token);
-
-        String url = "http://localhost:8080/usuarios/" + idPropietarioRestaurante;
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + token);
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-        ResponseEntity<Usuario> respuesta = restTemplate.exchange(
-                url, HttpMethod.GET, entity, Usuario.class);
-        Usuario propietario = respuesta.getBody();
-
-        if (propietario == null || !propietario.getCorreo().equals(correoToken)) {
-            throw new AccesoDenegadoPlatoException("Solo el propietario del restaurante puede realizar esta accion");
+    private void validarNombreNoSoloNumeros(String nombre) {
+        if (nombre.matches("\\d+")) {
+            throw new IllegalArgumentException("El nombre no puede ser solo números");
         }
+    }
+
+    public List<Plato> listarTodos() {
+        return platoRepository.findAll();
     }
 }
